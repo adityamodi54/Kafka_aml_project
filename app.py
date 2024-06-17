@@ -6,29 +6,28 @@ import uuid
 import toml
 from jsonschema import validate, ValidationError
 
-# Load secrets from secrets.toml
-with open('secrets.toml', 'r') as f:
-    secrets = toml.load(f)
+# Load secrets from Streamlit's secrets management
+secrets = st.secrets["confluent_cloud"]
 
 # Confluent Cloud configuration
-KAFKA_BOOTSTRAP_SERVERS = secrets['confluent_cloud']['KAFKA_BOOTSTRAP_SERVERS']
-KAFKA_API_KEY = secrets['confluent_cloud']['KAFKA_API_KEY']
-KAFKA_API_SECRET = secrets['confluent_cloud']['KAFKA_API_SECRET']
-KAFKA_TOPIC = secrets['confluent_cloud']['KAFKA_TOPIC']
+KAFKA_BOOTSTRAP_SERVERS = secrets["KAFKA_BOOTSTRAP_SERVERS"]
+KAFKA_API_KEY = secrets["KAFKA_API_KEY"]
+KAFKA_API_SECRET = secrets["KAFKA_API_SECRET"]
+KAFKA_TOPIC = secrets["KAFKA_TOPIC"]
 
 # Define the schema
 aml_alert_schema = {
-  "type": "record",
-  "namespace": "com.yourcompany.aml",
-  "name": "AmlAlert",
-  "fields": [
-    {"name": "transaction_id", "type": "string"},
-    {"name": "amount", "type": "double"},
-    {"name": "currency", "type": "string"},
-    {"name": "timestamp", "type": "string"},
-    {"name": "account_id", "type": "string"},
-    {"name": "alert_type", "type": "string"}
-  ]
+    "type": "record",
+    "namespace": "com.yourcompany.aml",
+    "name": "AmlAlert",
+    "fields": [
+        {"name": "transaction_id", "type": "string"},
+        {"name": "amount", "type": "double"},
+        {"name": "currency", "type": "string"},
+        {"name": "timestamp", "type": "string"},
+        {"name": "account_id", "type": "string"},
+        {"name": "alert_type", "type": "string"},
+    ],
 }
 
 # Initialize Kafka producer
