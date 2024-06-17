@@ -17,17 +17,16 @@ KAFKA_TOPIC = secrets["KAFKA_TOPIC"]
 
 # Define the schema
 aml_alert_schema = {
-    "type": "record",
-    "namespace": "com.yourcompany.aml",
-    "name": "AmlAlert",
-    "fields": [
-        {"name": "transaction_id", "type": "string"},
-        {"name": "amount", "type": "double"},
-        {"name": "currency", "type": "string"},
-        {"name": "timestamp", "type": "string"},
-        {"name": "account_id", "type": "string"},
-        {"name": "alert_type", "type": "string"},
-    ],
+    "type": "object",
+    "properties": {
+        "transaction_id": {"type": "string"},
+        "amount": {"type": "number"},
+        "currency": {"type": "string"},
+        "timestamp": {"type": "string"},
+        "account_id": {"type": "string"},
+        "alert_type": {"type": "string"}
+    },
+    "required": ["transaction_id", "amount", "currency", "timestamp", "account_id", "alert_type"]
 }
 
 # Initialize Kafka producer
