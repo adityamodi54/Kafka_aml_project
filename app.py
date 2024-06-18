@@ -122,6 +122,7 @@ if uploaded_file:
     
     # Print the column names to verify
     st.write("Column names in the uploaded file:", df.columns)
+    logger.info(f"Column names in the uploaded file: {df.columns}")
     
     compliance_issues = []
     suspicious_transactions = []
@@ -142,6 +143,7 @@ if uploaded_file:
     missing_columns = [col for col in required_columns if col not in df.columns]
     if missing_columns:
         st.error(f"Missing required columns in the uploaded file: {missing_columns}")
+        logger.error(f"Missing required columns in the uploaded file: {missing_columns}")
     else:
         df = df.astype({
             'Transaction ID': 'str',
@@ -227,20 +229,26 @@ if uploaded_file:
                 error = send_to_kafka(transaction)
                 if error:
                     st.error(error)
+                else:
+                    logger.info(f"Transaction sent to Kafka: {transaction}")
 
         # Display the compliance issues found, if any
         if compliance_issues:
             st.write("Compliance Issues Found:")
             st.write(pd.DataFrame(compliance_issues))
+            logger.info(f"Compliance Issues Found: {compliance_issues}")
         else:
             st.write("No compliance issues found!")
+            logger.info("No compliance issues found!")
 
         # Display suspicious transactions found, if any
         if suspicious_transactions:
             st.write("Suspicious Transactions Found:")
             st.write(pd.DataFrame(suspicious_transactions))
+            logger.info(f"Suspicious Transactions Found: {suspicious_transactions}")
         else:
             st.write("No suspicious transactions found!")
+            logger.info("No suspicious transactions found!")
 
 # Kafka consumer setup
 consumer_config = {
@@ -269,13 +277,16 @@ def display_messages():
                 continue
             else:
                 st.error(f"Consumer error: {msg.error()}")
+                logger.error(f"Consumer error: {msg.error()}")
                 break
 
         alert = json.loads(msg.value().decode('utf-8'))
         if 'transaction_id' in alert:
             st.json(alert)
+            logger.info(f"Received message: {alert}")
             if st.button("Acknowledge", key=alert['transaction_id']):
                 st.write(f"Acknowledged transaction {alert['transaction_id']}")
+                logger.info(f"Acknowledged transaction {alert['transaction_id']}")
 
 # Add a button to start consuming messages
 if st.button("Start Consuming Messages"):
