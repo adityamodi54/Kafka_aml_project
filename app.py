@@ -6,6 +6,11 @@ from confluent_kafka import Producer, Consumer, KafkaError
 import json
 import uuid
 from jsonschema import validate, ValidationError
+import logging
+
+# Set up logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 # Load secrets from Streamlit's secrets management
 secrets = st.secrets["confluent_cloud"]
@@ -47,8 +52,13 @@ def send_to_kafka(data):
         validate(instance=data, schema=aml_alert_schema)
         producer.produce(KAFKA_TOPIC, key=str(uuid.uuid4()), value=json.dumps(data))
         producer.flush()
+        logger.info(f"Sent data to Kafka: {data}")
     except ValidationError as e:
+        logger.error(f"Data validation error: {e.message} (row: {data})")
         return f"Data validation error: {e.message} (row: {data})"
+    except Exception as e:
+        logger.error(f"Failed to send message: {e}")
+        return f"Failed to send message: {e}"
     return None
 
 # Function to check email format using regular expressions
@@ -249,19 +259,24 @@ consumer.subscribe([KAFKA_TOPIC])
 st.header("Real-time Alerts")
 
 # Read messages from Kafka and display them in Streamlit
-while True:
-    msg = consumer.poll(timeout=1.0)
-    if msg is None:
-        continue
-    if msg.error():
-        if msg.error().code() == KafkaError._PARTITION_EOF:
+def display_messages():
+    while True:
+        msg = consumer.poll(timeout=1.0)
+        if msg is None:
             continue
-        else:
-            st.error(f"Consumer error: {msg.error()}")
-            break
+        if msg.error():
+            if msg.error().code() == KafkaError._PARTITION_EOF:
+                continue
+            else:
+                st.error(f"Consumer error: {msg.error()}")
+                break
 
-    alert = json.loads(msg.value().decode('utf-8'))
-    if 'transaction_id' in alert:
-        st.json(alert)
-        if st.button("Acknowledge", key=alert['transaction_id']):
-            st.write(f"Acknowledged transaction {alert['transaction_id']}")
+        alert = json.loads(msg.value().decode('utf-8'))
+        if 'transaction_id' in alert:
+            st.json(alert)
+            if st.button("Acknowledge", key=alert['transaction_id']):
+                st.write(f"Acknowledged transaction {alert['transaction_id']}")
+
+# Add a button to start consuming messages
+if st.button("Start Consuming Messages"):
+    display_messages()
